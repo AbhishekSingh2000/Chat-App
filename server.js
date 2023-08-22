@@ -10,6 +10,16 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+// New code snippet for emoji mappings
+const emojiMappings = {
+  react: "⚛️",
+  woah: "😮",
+  hey: "👋",
+  lol: "😂",
+  like: "🤍",
+  congratulations: "🎉"
+};
+
 io.on('connection', (socket) => {
   console.log('A user connected');
 
@@ -18,7 +28,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+    // Replace words with emojis
+    const replacedMsg = msg.replace(
+      /\b(?:react|woah|hey|lol|like|congratulations)\b/gi,
+      matched => emojiMappings[matched.toLowerCase()]
+    );
+
+    io.emit('chat message', replacedMsg);
   });
 });
 
