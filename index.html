@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat App</title>
-  <!-- <link rel="stylesheet" href="styles.css"> -->
 
   <style>
     /* Reset some default browser styling */
@@ -94,7 +93,7 @@
     }
   }
   
-  </style>
+</style>
 </head>
 <body>
   <div class="chat-container">
@@ -103,31 +102,72 @@
     </header>
     <ul id="messages" class="chat-messages"></ul>
     <form id="form" class="chat-form" action="">
-      <input id="input" class="chat-input" autocomplete="off" /><button class="chat-send-button">Send</button>
+      <input
+        id="input"
+        class="chat-input"
+        autocomplete="off"
+        onkeydown="handleSlashCommand(event)"
+      />
+      <button class="chat-send-button">Send</button>
     </form>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
 
-const form = document.getElementById('form');
-const input = document.getElementById('input');
-const messages = document.getElementById('messages');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value);
+        input.value = '';
+      }
+    });
 
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (input.value) {
-    socket.emit('chat message', input.value);
-    input.value = '';
-  }
-});
+    socket.on('chat message', (msg) => {
+      const li = document.createElement('li');
+      li.textContent = msg;
+      messages.appendChild(li);
+    });
 
-socket.on('chat message', (msg) => {
-  const li = document.createElement('li');
-  li.textContent = msg;
-  messages.appendChild(li);
-});
+    function handleSlashCommand(event) {
+      if (event.key === "Enter") {
+        const input = event.target.value;
+        if (input.startsWith("/")) {
+          const command = input.slice(1).toLowerCase();
+
+          switch (command) {
+            case "help":
+              alert(
+                "Available Commands:\n\n" +
+                "/help: Check all available /commands\n" +
+                "/random: Appends a random number in chat\n" +
+                "/clear: Clears the chat"
+              );
+              break;
+            case "random":
+              const randomNumber = Math.floor(Math.random() * 100);
+              const message = `here's your Random Number: ${randomNumber}`;
+              socket.emit("chat message", message);
+              break;
+            case "clear":
+              messages.innerHTML = ""; // Clear the chat messages
+              break;
+            default:
+              alert("Unknown command. Type /help for available commands.");
+          }
+
+          event.target.value = ""; // Clear the input field
+        } else {
+          // Regular chat message
+          socket.emit("chat message", input);
+          event.target.value = ""; // Clear the input field
+        }
+      }
+    }
   </script>
 </body>
 </html>
